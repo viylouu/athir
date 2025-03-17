@@ -51,7 +51,7 @@ load_shaders :: proc() {
         return
     } defer delete(data_vsh, context.allocator)
 
-    c_data_vsh := str.clone_to_cstring(cast(string)data_vsh) 
+    c_data_vsh: cstring = str.clone_to_cstring(cast(string)data_vsh) 
     defer delete(c_data_vsh, context.allocator)
 
     data_fsh, ok_fsh := os.read_entire_file("assets/shaders/base.fsh", context.allocator)
@@ -60,11 +60,11 @@ load_shaders :: proc() {
         return
     } defer delete(data_fsh, context.allocator)
 
-    c_data_fsh := str.clone_to_cstring(cast(string)data_fsh) 
+    c_data_fsh: cstring = str.clone_to_cstring(cast(string)data_fsh) 
     defer delete(c_data_fsh, context.allocator)
 
 
-    vsh,fsh := gl.CreateShader(gl.VERTEX_SHADER), gl.CreateShader(gl.FRAGMENT_SHADER)
+    vsh,fsh: u32 = gl.CreateShader(gl.VERTEX_SHADER), gl.CreateShader(gl.FRAGMENT_SHADER)
     gl.ShaderSource(vsh, 1, &c_data_vsh, nil)
     gl.CompileShader(vsh)
     defer gl.DeleteShader(vsh)
@@ -126,7 +126,7 @@ rect :: proc(x,y,width,height: f32) {
     }
 
     gl.BindBuffer(gl.ARRAY_BUFFER, vbo_rect); defer gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-    ptr := gl.MapBuffer(gl.ARRAY_BUFFER, gl.WRITE_ONLY)
+    ptr: rawptr = gl.MapBuffer(gl.ARRAY_BUFFER, gl.WRITE_ONLY)
     if ptr != nil {
         vert_ptr := cast([^]f32)ptr
         for i := 0; i < 12; i += 1 {

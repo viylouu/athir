@@ -16,7 +16,7 @@ load_tex :: proc(path: cstring) -> u32 {
     gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
     width,height,channels: i32
-    data := stbi.load(path, &width, &height, &channels, 0)
+    data: rawptr = stbi.load(path, &width, &height, &channels, 0)
     if data == nil {
         fmt.println("failed to load texture from path ", path)
         return 0

@@ -9,6 +9,7 @@ import gl "vendor:OpenGL"
 import w "../../window"
 
 vao_rect,vbo_rect: u32
+rect_verts: [12]f32
 
 color_r,color_g,color_b,color_a: f32
 
@@ -99,6 +100,9 @@ clear :: proc(r,g,b,a: f32) {
 }
 
 fill :: proc(r,g,b,a:f32) {
+    gl.UseProgram(prog_base);
+    gl.Uniform4f(prog_base_uniloc_color,r,g,b,a)
+
     color_r = r
     color_g = g
     color_b = b
@@ -111,7 +115,7 @@ rect :: proc(x,y,width,height: f32) {
     BAX, BAY := w.ss_to_ndc(x+width,y)
     BBX, BBY := w.ss_to_ndc(x+width,y+height)
 
-    vertices: [12]f32 = { 
+    rect_verts = { 
         AAX,AAY, //0
         ABX,ABY, //1
         BBX,BBY, //2
@@ -126,15 +130,12 @@ rect :: proc(x,y,width,height: f32) {
     if ptr != nil {
         vert_ptr := cast([^]f32)ptr
         for i := 0; i < 12; i += 1 {
-            vert_ptr[i] = vertices[i]
+            vert_ptr[i] = rect_verts[i]
         }
         gl.UnmapBuffer(gl.ARRAY_BUFFER)
     } defer free(ptr, context.allocator)
 
-    gl.UseProgram(prog_base); defer gl.UseProgram(0)
-    gl.BindVertexArray(vao_rect); defer gl.BindVertexArray(0)
-
-    gl.Uniform4f(prog_base_uniloc_color,color_r,color_g,color_b,color_a)
+    gl.BindVertexArray(vao_rect);
 
     gl.DrawArrays(gl.TRIANGLES,0,6)
 }

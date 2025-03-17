@@ -41,7 +41,7 @@ create_window :: proc(width,height: i32, vsync: bool = true, name: cstring = "at
 
     glfw.MakeContextCurrent(window)
     glfw.SwapInterval(vsync?1:0)
-    glfw.SetKeyCallback(window,key_callback)
+    glfw.SetKeyCallback(window,inp.key_callback)
     glfw.SetFramebufferSizeCallback(window,size_callback)
 
     gl.load_up_to(int(GL_MAJOR_VERSION), GL_MINOR_VERSION, glfw.gl_set_proc_address)
@@ -49,13 +49,6 @@ create_window :: proc(width,height: i32, vsync: bool = true, name: cstring = "at
     return true
 }
 
-key_callback :: proc "c" (window: glfw.WindowHandle, key,scancode,action,mods: i32) {
-    if action == glfw.PRESS {
-        inp.keystates[key] = true
-    } else if action == glfw.RELEASE {
-        inp.keystates[key] = false
-    }
-}
 
 size_callback :: proc "c" (window: glfw.WindowHandle, width,height: i32) {
     gl.Viewport(0,0, width,height)

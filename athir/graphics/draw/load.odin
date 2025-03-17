@@ -58,24 +58,7 @@ load_shaders :: proc() {
         c_data_fsh: cstring = str.clone_to_cstring(cast(string)data_fsh) 
         defer delete(c_data_fsh, context.allocator)
 
-
-        vsh,fsh: u32 = gl.CreateShader(gl.VERTEX_SHADER), gl.CreateShader(gl.FRAGMENT_SHADER)
-        gl.ShaderSource(vsh, 1, &c_data_vsh, nil)
-        gl.CompileShader(vsh)
-        defer gl.DeleteShader(vsh)
-
-        check_shader_compile(vsh)
-
-        gl.ShaderSource(fsh, 1, &c_data_fsh, nil)
-        gl.CompileShader(fsh)
-        defer gl.DeleteShader(fsh)
-
-        check_shader_compile(fsh)
-
-        prog_base = gl.CreateProgram()
-        gl.AttachShader(prog_base,vsh)
-        gl.AttachShader(prog_base,fsh)
-        gl.LinkProgram(prog_base)
+        prog_base = create_program(c_data_vsh,c_data_fsh)
 
         check_program_link(prog_base)
 
@@ -109,26 +92,7 @@ load_shaders :: proc() {
         c_data_fsh: cstring = str.clone_to_cstring(cast(string)data_fsh) 
         defer delete(c_data_fsh, context.allocator)
 
-
-        vsh,fsh: u32 = gl.CreateShader(gl.VERTEX_SHADER), gl.CreateShader(gl.FRAGMENT_SHADER)
-        gl.ShaderSource(vsh, 1, &c_data_vsh, nil)
-        gl.CompileShader(vsh)
-        defer gl.DeleteShader(vsh)
-
-        check_shader_compile(vsh)
-
-        gl.ShaderSource(fsh, 1, &c_data_fsh, nil)
-        gl.CompileShader(fsh)
-        defer gl.DeleteShader(fsh)
-
-        check_shader_compile(fsh)
-
-        prog_text = gl.CreateProgram()
-        gl.AttachShader(prog_text,vsh)
-        gl.AttachShader(prog_text,fsh)
-        gl.LinkProgram(prog_text)
-
-        check_program_link(prog_base)
+        prog_text = create_program(c_data_vsh,c_data_fsh)
 
         sprog_uniloc_color := gl.GetUniformLocation(prog_text, "color")
         if sprog_uniloc_color == -1 {
@@ -148,6 +112,31 @@ load_shaders :: proc() {
     }
 }
 
+
+create_program :: proc(vsh_data,fsh_data:cstring) -> u32 {
+    _vsh_data,_fsh_data := vsh_data,fsh_data
+    defer delete(_vsh_data); defer delete(_fsh_data)
+
+    vsh,fsh: u32 = gl.CreateShader(gl.VERTEX_SHADER), gl.CreateShader(gl.FRAGMENT_SHADER)
+    gl.ShaderSource(vsh, 1, &_vsh_data, nil)
+    gl.CompileShader(vsh)
+    defer gl.DeleteShader(vsh)
+
+    check_shader_compile(vsh)
+
+    gl.ShaderSource(fsh, 1, &_fsh_data, nil)
+    gl.CompileShader(fsh)
+    defer gl.DeleteShader(fsh)
+
+    check_shader_compile(fsh)
+
+    prog := gl.CreateProgram()
+    gl.AttachShader(prog,vsh)
+    gl.AttachShader(prog,fsh)
+    gl.LinkProgram(prog)
+
+    return prog
+}
 
 check_shader_compile :: proc(shader: u32) {
     success: i32

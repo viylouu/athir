@@ -6,7 +6,7 @@ import str "core:strings"
 
 import gl "vendor:OpenGL"
 
-import w "../window"
+import w "../../window"
 
 vao_rect,vbo_rect: u32
 

@@ -6,7 +6,7 @@ import str "core:strings"
 import "vendor:glfw"
 
 import a "athir"
-import "athir/draw"
+import "athir/graphics/draw"
 import inp "athir/input"
 
 player_x,player_y: f32

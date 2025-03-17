@@ -1,7 +1,7 @@
 package athir
 
 import w "window"
-import "draw"
+import "graphics/draw"
 
 import "vendor:glfw"
 

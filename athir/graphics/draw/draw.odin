@@ -1,12 +1,12 @@
 package draw
 
 import "core:fmt"
-import "core:os"
-import str "core:strings"
 
 import gl "vendor:OpenGL"
+import stbt "vendor:stb/truetype"
 
 import w "../../window"
+import t "../text"
 
 vao_rect,vbo_rect: u32
 rect_verts: [12]f32
@@ -16,87 +16,23 @@ color_r,color_g,color_b,color_a: f32
 prog_base: u32
 prog_base_uniloc_color: i32
 
+prog_text: u32
+prog_text_uniloc_color,prog_text_uniloc_tex: i32
 
-unload :: proc() {
-    
-}
+active_font: t.font
 
-
-load :: proc() {
-    load_buffers()
-    load_shaders()
-}
-
-load_buffers :: proc() {
-    /* rect */ {
-        gl.GenVertexArrays(1,&vao_rect)
-        gl.GenBuffers(1,&vbo_rect)
-
-        gl.BindVertexArray(vao_rect)
-        gl.BindBuffer(gl.ARRAY_BUFFER, vbo_rect)
-
-        gl.BufferData(gl.ARRAY_BUFFER, 12*size_of(f32), nil, gl.DYNAMIC_DRAW)
-
-        gl.VertexAttribPointer(0,2, gl.FLOAT, gl.FALSE, 2*size_of(f32), 0)
-        gl.EnableVertexAttribArray(0)
-
-        gl.BindVertexArray(0)
-    }
-}
-
-load_shaders :: proc() {
-    data_vsh, ok_vsh := os.read_entire_file("assets/shaders/base.vsh", context.allocator)
-    if !ok_vsh {
-        fmt.println("failed to load vertex shader!")
-        return
-    } defer delete(data_vsh, context.allocator)
-
-    c_data_vsh: cstring = str.clone_to_cstring(cast(string)data_vsh) 
-    defer delete(c_data_vsh, context.allocator)
-
-    data_fsh, ok_fsh := os.read_entire_file("assets/shaders/base.fsh", context.allocator)
-    if !ok_fsh {
-        fmt.println("failed to load fragment shader!")
-        return
-    } defer delete(data_fsh, context.allocator)
-
-    c_data_fsh: cstring = str.clone_to_cstring(cast(string)data_fsh) 
-    defer delete(c_data_fsh, context.allocator)
-
-
-    vsh,fsh: u32 = gl.CreateShader(gl.VERTEX_SHADER), gl.CreateShader(gl.FRAGMENT_SHADER)
-    gl.ShaderSource(vsh, 1, &c_data_vsh, nil)
-    gl.CompileShader(vsh)
-    defer gl.DeleteShader(vsh)
-
-    check_shader_compile(vsh)
-
-    gl.ShaderSource(fsh, 1, &c_data_fsh, nil)
-    gl.CompileShader(fsh)
-    defer gl.DeleteShader(fsh)
-
-    check_shader_compile(fsh)
-
-    prog_base = gl.CreateProgram()
-    gl.AttachShader(prog_base,vsh)
-    gl.AttachShader(prog_base,fsh)
-    gl.LinkProgram(prog_base)
-
-    check_program_link(prog_base)
-
-    sprog_uniloc_color := gl.GetUniformLocation(prog_base, "color")
-    if sprog_uniloc_color == -1 {
-        fmt.println("could not find uniform \"color\"!")
-        return
-    }
-}
-
-
-// drawing functions
 
 clear :: proc(r,g,b,a: f32) {
     gl.ClearColor(r,g,b,a)
     gl.Clear(gl.COLOR_BUFFER_BIT)
+}
+
+// must be AFTER fill
+font :: proc(_font:t.font) {
+    gl.UseProgram(prog_text)
+    gl.Uniform4f(prog_text_uniloc_color,color_r,color_g,color_b,color_a)
+    gl.Uniform1i(prog_text_uniloc_tex,0)
+    active_font = _font;
 }
 
 fill :: proc(r,g,b,a:f32) {
@@ -140,22 +76,35 @@ rect :: proc(x,y,width,height: f32) {
     gl.DrawArrays(gl.TRIANGLES,0,6)
 }
 
-check_shader_compile :: proc(shader: u32) {
-    success: i32
-    gl.GetShaderiv(shader, gl.COMPILE_STATUS, &success)
-    if success == 0 {
-        log: [512]u8
-        gl.GetShaderInfoLog(shader, 512, nil, &log[0])
-        fmt.println("Shader compilation failed: ", log)
-    }
-}
+text :: proc(x,y:f32, text:string) {
+    gl.ActiveTexture(gl.TEXTURE0)
+    gl.BindTexture(gl.TEXTURE_2D,active_font.tex)
+    gl.BindVertexArray(active_font.vao)
 
-check_program_link :: proc(prog: u32) {
-    success: i32
-    gl.GetProgramiv(prog, gl.LINK_STATUS, &success)
-    if success == 0 {
-        log: [512]u8
-        gl.GetProgramInfoLog(prog, 512, nil, &log[0])
-        fmt.println("Program linking failed: ", log)
+    verts: [6*4]f32
+
+    xpos,ypos := x,y
+
+    for char in text {
+        if (char < 32 || char >= 128) {
+            continue
+        }
+
+        q: stbt.aligned_quad
+        stbt.GetBakedQuad(&active_font.chardat[0],active_font.tex_width,active_font.tex_height,i32(char-32),&xpos,&ypos,&q,true)
+
+        verts = {
+            q.x0, q.y0, q.s0, q.t0,
+            q.x1, q.y0, q.s1, q.t0,
+            q.x1, q.y1, q.s1, q.t1,
+
+            q.x1, q.y1, q.s1, q.t1,
+            q.x0, q.y1, q.s0, q.t1,
+            q.x0, q.y0, q.s0, q.t0
+        }
+
+        gl.BindBuffer(gl.ARRAY_BUFFER,active_font.vbo)
+        gl.BufferSubData(gl.ARRAY_BUFFER,0,size_of(verts),&verts)
+        gl.DrawArrays(gl.TRIANGLES,0,6)
     }
 }

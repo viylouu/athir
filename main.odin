@@ -8,15 +8,18 @@ import "vendor:glfw"
 import a "athir"
 import "athir/graphics/draw"
 import inp "athir/input"
+import t "athir/graphics/text"
+import w "athir/window"
 
 player_x,player_y: f32
+dfont: t.font
 
 main :: proc() {
     a.setup(512,512,init,update,render,exit,false)
 }
 
 init :: proc() {
-
+    dfont = t.load_font("assets/fonts/Chivo-Light.ttf",16)
 }
 
 update :: proc() {
@@ -45,6 +48,10 @@ render :: proc() {
 
     draw.fill(1,1,0,1)
     draw.rect(256,256,128,128)
+
+    draw.fill(1,1,1,1)
+    draw.font(dfont)
+    draw.text(0,0, "hello!")
 }
 
 exit :: proc() {

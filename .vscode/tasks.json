@@ -4,7 +4,7 @@
         {
             "label": "Build Odin",
             "type": "shell",
-            "command": "odin build . -out:build/athir.exe; xcopy /e /i /y \"assets\" \"build\\assets\"; start build/athir.exe",
+            "command": "odin build .; xcopy assets build\\assets /s /e /y; mv athir.exe build/athir.exe; start build/athir.exe",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
